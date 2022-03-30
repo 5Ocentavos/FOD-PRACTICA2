@@ -12,6 +12,7 @@ Nota: todos los archivos se encuentran ordenados por código de productos. En ca
 puede venir 0 o N registros de un determinado producto.
 }
 
+
 program ejer3prac2;
 uses SysUtils;  ///LPM 
 type
@@ -36,40 +37,62 @@ type
   vectorArchivoVentas = array [1..30] of archivoVentas;
   vectorRegistroVenta = array [1..30] of venta;
   
-
-procedure buscarMinimoYActualizar (var vectorArchivoDetalles: vectorArchivoVentas; var vectorRegistrosDetalle: vectorRegistroVenta; 
-                                   var ventaMin: venta);
-var
+  
+procedure cerrarArchivoDetalles (var vecArchDetalles: vectorArchivoVentas);
+var 
   i: integer;
 begin
+  for i := 1 to 30 do
+    begin
+      close (vecArchDetalles [i]);
+    end;
+
+end;
   
 
+procedure buscarMinimoYActualizar (var vecArchDetalles: vectorArchivoVentas; var vecRegDetalles: vectorRegistroVenta;                                    var ventaMin: venta);
+var
+  i, pos: integer;
+begin
+  ventaMin.codProd := 9999;
+  for i:= 1 to 30 do 
+    begin
+      if (vecRegDetalles[i].codProd < ventaMin.codProd) then
+        begin
+          ventaMin := vecRegDetalles[i];
+          pos := i;
+        end;
+    end;
+  if (ventaMin.codProd <> 9999) then
+    if (not EOF (vecArchDetalles[pos])) then
+      read (vecArchDetalles[pos], vecRegDetalles[pos])
+    else
+      vecRegDetalles [pos].codProd := 9999;
 end;
                                    
   
-procedure cargarVectorRegistros (var vecArchDetalles: vectorArchivoVentas; var vecRegDetalle: vectorRegistroVenta);  
+procedure cargarVectorRegistros (var vecArchDetalles: vectorArchivoVentas; var vecRegDetalles: vectorRegistroVenta);  
 var
   i: integer;
 begin
   for i := 1 to 30 do
     begin
       if (not EOF (vecArchDetalles [i])) then
-        read (vecArchDetalles[i], vecRegDetalle [i])
+        read (vecArchDetalles[i], vecRegDetalles [i])
       else
-        vecRegDetalle [i].codProd := 9999;
+        vecRegDetalles [i].codProd := 9999;
     end;
 end;
 
 
-procedure actualizarMaestro (var archivoMaestro: archivoProductos; var vectorArchivoDetalles: vectorArchivoVentas);
+procedure actualizarMaestro (var archMaestro: archivoProductos; var vecArchDetalles: vectorArchivoVentas);
 var
   prod : producto;
   ventaMin, ventaAct: venta;
-  vecRegistrosDetalle: vectorRegistroVenta;
+  vecRegDetalles: vectorRegistroVenta;
 begin
-  cargarVectorRegistros (vectorArchivoDetalles, vectorRegistrosDetalle);
-  buscarMinimoYActualizar (vectorArchivoDetalles, vectorRegistrosDetalle, ventaMin);
-  
+  cargarVectorRegistros (vecArchDetalles, vecRegDetalles);
+  buscarMinimoYActualizar (vecArchDetalles, vecRegDetalles, ventaMin);  
   while (ventaMin.codProd <> 9999) do 
     begin
       ventaAct.codProd := ventaMin.codProd;
@@ -77,19 +100,20 @@ begin
       while (ventaAct.codProd = ventaMin.codProd) do
         begin
           ventaAct.cantVend := ventaAct.cantVend + ventaMin.cantVend;
-          buscarMinimoYActualizar (vectorArchivoDetalles, vectorRegistrosDetalle, ventaMin);    
+          buscarMinimoYActualizar (vecArchDetalles, vecRegDetalles, ventaMin);    
         end;
       //busco el codigo en el maestro
-      while ((not EOF (archivoMaestro)) and (prod.codProd <> ventaAct.codProd)) do
+      read (archMaestro, prod);
+      while ((not EOF (archMaestro)) and (prod.codProd <> ventaAct.codProd)) do
         read (archMaestro, prod);
       prod.stockDisp := prod.stockDisp - ventaAct.cantVend;
-      seek (archivoMaestro, filePos (archivoMaestro) -1);
-      write (archivoMaestro, prod);
+      seek (archMaestro, filePos (archMaestro) -1);
+      write (archMaestro, prod);
     end;
-  
 end;
 
-procedure hacerAssignDeLosDetallesYAbrirlos (var vectorArchivoDetalle: vectorArchivoVentas);
+
+procedure hacerAssignDeLosDetallesYReset (var vecArchDetalle: vectorArchivoVentas);
 var 
   i: integer;
   nomArch: string;
@@ -97,23 +121,25 @@ begin
   for i := 1 to 30 do
     begin
       nomArch := ('detalle_'+IntToStr(i));
-      assign (vectorArchivoDetalle [i], nomArch);
-      reset (vectorArchivoDetalle [i]);
+      assign (vecArchDetalle [i], nomArch);
+      reset (vecArchDetalle [i]);
     end;
 end;
 
 
-
 var
-  archivoMaestro : archivoProductos;
-  vectorArchivoDetalles: vectorArchivoVentas;
-  
+  archMaestro : archivoProductos;
+  vecArchDetalles: vectorArchivoVentas;  
+
 
 BEGIN
-  assign (archivoMaestro, 'archivo_maestro');
-  reset (archivoMaestro);
-  hacerAssignDeLosDetallesYAbrirlos (vectorArchivoDetalles);
-  actualizarMaestro (archivoMaestro, vectorArchivoDetalles);
+  assign (archMaestro, 'archivo_maestro');
+  reset (archMaestro);
+  hacerAssignDeLosDetallesYReset (vecArchDetalles);
+  actualizarMaestro (archMaestro, vecArchDetalles);
+  close (archMaestro);
+  cerrarArchivoDetalles (vecArchDetalles);
 //  listarStockPorDebajo (archivoMaestro);
 END.
+
 
