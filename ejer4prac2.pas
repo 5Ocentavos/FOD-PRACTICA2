@@ -21,14 +21,10 @@ const
   cant_maquinas = 5;
   valor_alto = 9999;
 type
-  fech = record
-    dia: 1..33;
-    mes: 1..13;
-  end;
   
   sesion = record
     cod_usuario: integer;
-    fecha: fech;                 //el string 29/1 es mas grande que el 28/2....
+    fecha: longint;           // si hubiera sabido antes de tu existencia... 
     tiempo_sesion: integer;    
   end;
   
@@ -40,7 +36,7 @@ type
 procedure mostrar (s:sesion);
 begin
   writeln ('COD_USUARIO: ', s.cod_usuario);
-  writeln ('FECHA: ', s.fecha.dia, '/',s.fecha.mes);
+  writeln ('FECHA: ', s.fecha);
   writeln ('TIEMPO_TOTAL_SESIONES: ', s.tiempo_sesion);
   writeln ('');
 end;
@@ -75,77 +71,8 @@ begin
     read (arch_detalle, reg_sesion)
   else
     reg_sesion.cod_usuario := valor_alto;
-    
 end;
 
-
-{
-procedure fechaMenorIgual (var queEs: string; fechaAct: fech; fechaMin: fech);
-begin
-  if (fechaAct.mes < fechaMin.mes) then
-    queEs := 'menor'
-  else
-    if ((fechaAct.mes = fechaMin.mes) and (fechaAct.dia < fechaMin.dia)) then
-      queEs := 'menor'
-    else
-      if ((fechaAct.mes = fechaMin.mes) and (fechaAct.dia = fechaMin.dia)) then
-        queEs := 'igual'
-      else
-        queEs := 'mayor';
-end;
-
-function esMinimo ( sesion_minima: sesion; sesion_actual: sesion): boolean;
-var 
-  queEs: string; 
-begin
-  if (sesion_actual.cod_usuario <> valor_alto) then
-    begin
-      fechaMenorIgual (queEs, sesion_actual.fecha, sesion_minima.fecha);
-      if (queEs = 'menor') then
-        esMinimo := true
-      else
-        if ((queEs = 'igual') and (sesion_actual.cod_usuario < sesion_minima.cod_usuario)) then
-          esMinimo := true
-        else
-          esMinimo := false;
-    end
-  else
-    esMinimo := false;
-end;  
-  
-procedure minimo (var sesion_minima: sesion; var vec_reg_sesiones: vectorRegistroSesiones; var vec_arch_detalles: vectorArchivoSesiones);
-var
-  i, pos: integer;
-begin
-  sesion_minima.cod_usuario := valor_alto;
-  sesion_minima.fecha.dia := 32;
-  sesion_minima.fecha.mes := 13;
-  for i := 1 to cant_maquinas do
-    begin
-      if (esMinimo (sesion_minima, vec_reg_sesiones[i])) then //ESTE MINIMO NO FUNCIONA PORQUE SESION_MINIMA SE ACTUALIZA 
-        begin                                                 //SI LA FECHA ES MENOR, SIN IMPORTAR QUE EL COD SEA MAS CHICO.
-          sesion_minima := vec_reg_sesiones[i];               //SI TENGO COD 2 FECHA ES 3/2  Y COD 1 FECHA 9/2
-          pos := i;                                           //EL MINIMO SERIA COD 1 FECHA 9/2 NO COD 2 FECHA 3/2
-        end;
-    end;
-  write (sesion_minima.cod_usuario);
-  if (sesion_minima.cod_usuario <> valor_alto) then
-    begin
-      leerDetalle (vec_arch_detalles[pos], vec_reg_sesiones[pos]);
-    end;
-end;
-}
-
-function fechaMenor (fechaAct: fech; fechaMin: fech): boolean;
-begin
-  if (fechaAct.mes < fechaMin.mes) then
-    fechaMenor := true
-  else
-    if (fechaMin.mes = fechaAct.mes) and (fechaAct.dia < fechaMin.dia) then
-      fechaMenor := true
-    else
-      fechaMenor := false;
-end;
 
 
 procedure minimo (var sesion_minima: sesion; var vec_reg_sesiones: vectorRegistroSesiones; var vec_arch_detalles: vectorArchivoSesiones);
@@ -153,8 +80,7 @@ var
   i, pos: integer;
 begin
   sesion_minima.cod_usuario := valor_alto;
-  sesion_minima.fecha.dia := 32;
-  sesion_minima.fecha.mes := 13;
+  sesion_minima.fecha := 99999999;
   for i := 1 to cant_maquinas do
     begin
       if (vec_reg_sesiones[i].cod_usuario <> valor_alto) then
@@ -167,7 +93,7 @@ begin
               pos := i;
             end
           else
-            if ((vec_reg_sesiones[i].cod_usuario = sesion_minima.cod_usuario) and (fechaMenor (vec_reg_sesiones[i].fecha, sesion_minima.fecha))) then
+            if ((vec_reg_sesiones[i].cod_usuario = sesion_minima.cod_usuario) and (vec_reg_sesiones[i].fecha < sesion_minima.fecha)) then
               begin
                 sesion_minima := vec_reg_sesiones [i];
                 pos := i;
@@ -179,7 +105,6 @@ begin
       leerDetalle (vec_arch_detalles[pos], vec_reg_sesiones[pos]);
     end;
 end;
-
 
 
 
@@ -249,7 +174,7 @@ var
 BEGIN
   enlace (arch_maestro, vec_arch_detalles);
   crearMaestro (arch_maestro, vec_arch_detalles);
-  writeln ('******************************************************************');
+  writeln ();
   //assign (arch_maestro, 'archivo_sesiones_totales'); 
   //mostrarMaestro (arch_maestro);
 END.
