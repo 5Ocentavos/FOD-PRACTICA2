@@ -165,3 +165,14 @@ begin
     end;
 end;
 
+var
+  archMaestro : archivoProductos;
+  vecArchDetalles: vectorArchivoVentas;
+  
+BEGIN
+  assign (archMaestro, 'archivo_maestro');
+  assignVectorArchivoDetalles (vecArchDetalles);
+  actualizarMaestro (archMaestro, vecArchDetalles);
+  listarStockPorDebajo (archivoMaestro);
+END.
+
